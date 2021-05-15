@@ -2,6 +2,13 @@ import sqlite3
 
 
 def main():
+    con = sqlite3.connect('winereviewsdb.db')
+    cur = con.cursor()
+    cur.execute('''CREATE TABLE IF NOT EXISTS reviews(
+                        name text NOT NULL,
+                        rating integer NOT NULL,
+                        review text NOT NULL
+                );''')
     name = input('Enter your name: ')
     welcome(name)
     print('Option 1: Add a wine')
@@ -11,31 +18,32 @@ def main():
     while not valid_option:
         selection = input('What would you like to do: ')
         print()
-        if menu_option(selection):
+        if menu_option(selection, con, cur):
             valid_option = True
+    con.close()
 
 
 def welcome(name):
     print(f'----Welcome to TastyWines {name}!----\n')
 
 
-def menu_option(selection):
+def menu_option(selection, con, cur):
     try:
         selection = int(selection)
         if selection == 1:
-            add_wine()
+            add_wine(cur)
         elif selection == 2:
-            show_wines()
+            show_wines(cur)
         elif selection == 3:
-            search_wines()
+            search_wines(cur)
     except ValueError:
         print('You did not enter a valid selection. Try again.\n')
         return False
-
+    con.commit()
     return True
 
 
-def add_wine():
+def add_wine(cur):
     not_correct = True
     wine = Wine()
 
@@ -75,18 +83,32 @@ def add_wine():
         print('Maybe next time :)\n')
 
     print(f'This is the wine you added: \n{wine}\n')
+    cur.execute(f'''INSERT INTO reviews
+                    VALUES ('{wine.name()}', {wine.rating()}, '{wine.review()}');''')
 
 
-def show_wines():
-    # implement this when you add the database
-    # pseudo-code
-    # ask user what details they want to print
-    # print names only, or details, or rating, etc
-    # print wines and selected details
-    print('UNDER CONSTRUCTION')
+def show_wines(cur):
+    exit_select = False
+    options = (1, 2, 0)
+    while exit_select is False:
+        print('''   1 - All Details\n   2 - Only Wine Names\n   0 - Exit''')
+        selection = int(input('What would you like to do: '))
+        if selection not in options:
+            print('You did not select a valid option.')
+            continue
+        elif selection == 1:
+            print('REVIEWED WINES:')
+            for row in cur.execute('SELECT * from reviews;'):
+                print(f'  {row[0]}: {row[1]}\n   {row[2]}\n')
+        elif selection == 2:
+            for row in cur.execute('SELECT name from reviews;'):
+                print(f'{row[0]}')
+            print()
+        elif selection == 0:
+            exit_select = True
 
 
-def search_wines():
+def search_wines(cur):
     # implement this when you add the database
     # might be worthwhile parsing words and returning results that match at least one word
     print('UNDER CONSTRUCTION')
