@@ -1,5 +1,6 @@
 import sqlite3
-
+# current bugs:
+# - can't insert text with apostrophes because the characters aren't escaped
 
 def main():
     con = sqlite3.connect('winereviewsdb.db')
@@ -51,7 +52,7 @@ def add_wine(cur):
         name = input('What is the name of the wine: ')
         print(f'You entered {name}.\n')
         if input('Is that correct (y/n): ').lower() == 'y':
-            wine.name(name)
+            wine.name(name.lower())
             not_correct = False
 
     rating = int(input('\nRate the wine from 1-10: '))
@@ -109,9 +110,37 @@ def show_wines(cur):
 
 
 def search_wines(cur):
-    # implement this when you add the database
-    # might be worthwhile parsing words and returning results that match at least one word
-    print('UNDER CONSTRUCTION')
+    exit_select = False
+    options = (1, 2, 0)
+    while exit_select is False:
+        print('''   1 - Search by Name\n   2 - Search by Rating\n   0 - Exit''')
+        selection = int(input('What would you like to do: '))
+        if selection not in options:
+            print('You did not select a valid option.\n')
+            continue
+        elif selection == 1:
+            name_search = input('Enter name: ')
+            name_search = name_search.lower()
+            is_there = False
+            for row in cur.execute('SELECT name FROM reviews'):
+                if is_there is False and name_search == row[0]:
+                    rev = cur.execute(f'SELECT * FROM reviews WHERE name = \'{name_search}\';').fetchall()[0]
+                    print(f'  {rev[0]}: {rev[1]}\n   {rev[2]}\n')
+                    is_there = True
+            if is_there is False:
+                print('That wine is not in the list.\n')
+        elif selection == 2:
+            rating_search = int(input('Enter rating: '))
+            is_there = False
+            for row in cur.execute('SELECT rating FROM reviews'):
+                if is_there is False and rating_search == row[0]:
+                    for rev in cur.execute(f'SELECT * FROM reviews WHERE rating = \'{rating_search}\';').fetchall():
+                        print(f'  {rev[0]}: {rev[1]}\n   {rev[2]}\n')
+                    is_there = True
+            if is_there is False:
+                print(f'There are no wines with a rating of {rating_search} in the list.\n')
+        elif selection == 0:
+            exit_select = True
 
 
 class Wine:
