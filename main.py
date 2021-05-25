@@ -2,6 +2,7 @@ import sqlite3
 # current bugs:
 # - can't insert text with apostrophes because the characters aren't escaped
 
+
 def main():
     con = sqlite3.connect('winereviewsdb.db')
     cur = con.cursor()
@@ -19,18 +20,21 @@ def main():
     while not valid_option:
         selection = input('What would you like to do: ')
         print()
-        if menu_option(selection, con, cur):
+        if menu_option(int(selection), con, cur):
             valid_option = True
     con.close()
 
 
-def welcome(name):
+def welcome(name: str):
+    '''
+    :param name:
+    :return:
+    '''
     print(f'----Welcome to TastyWines {name}!----\n')
 
 
-def menu_option(selection, con, cur):
+def menu_option(selection: int, con, cur) -> bool:
     try:
-        selection = int(selection)
         if selection == 1:
             add_wine(cur)
         elif selection == 2:
@@ -78,6 +82,8 @@ def add_wine(cur):
             print()
             rev_confirm = input(f'You wrote: "{review}"\nDo you want to edit the review? (y/n) ')
             if rev_confirm.lower() == 'n':
+                review = review.replace('\'', '')  # band-aids apostrophe issue for now
+                print(review)
                 wine.review(review)
                 print('Good. Your review has been saved.\n')
     else:
