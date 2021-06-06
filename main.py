@@ -11,36 +11,53 @@ def main():
                         rating integer NOT NULL,
                         review text NOT NULL
                 );''')
-    name = input('Enter your name: ')
-    welcome(name)
-    print('Option 1: Add a wine')
-    print('Option 2: Show wines')
-    print('Option 3: Search wines\n')
-    valid_option = False
-    while not valid_option:
-        selection = input('What would you like to do: ')
+    name: str = input('Enter your name: ')
+    print(f'----Welcome to TastyWines {name}!----\n')
+    option: int = -1
+    while option != 0:
+        print('Option 1: Add a wine')
+        print('Option 2: Show wines')
+        print('Option 3: Search wines')
+        print('Option 4: Remove a wine')
+        print('Option 0: Exit\n')
+        option: str = input('What would you like to do: ')
         print()
-        if menu_option(int(selection), con, cur):
-            valid_option = True
+        try:
+            option = int(option)
+            if option != 0:
+                menu_option(int(option), con, cur)
+        except ValueError:
+            print('You did not enter a valid selection.\n')
     con.close()
 
 
-def welcome(name: str):
-    '''
-    :param name:
-    :return:
-    '''
-    print(f'----Welcome to TastyWines {name}!----\n')
+def menu_option(option: int, con, cur) -> bool:
+    """Runs function based on user's selection
 
+    Parameters
+    ----------
+    option : int
+        The user's selection
+    con : sqlite3.Connection
+        Connection to the SQLite3 database
+    cur : sqlite3.Cursor
+        Database connection cursor
 
-def menu_option(selection: int, con, cur) -> bool:
+    Returns
+    -------
+    bool
+        a bool that tells if the user's input was valid or not
+    """
+
     try:
-        if selection == 1:
+        if option == 1:
             add_wine(cur)
-        elif selection == 2:
+        elif option == 2:
             show_wines(cur)
-        elif selection == 3:
+        elif option == 3:
             search_wines(cur)
+        elif option == 4:
+            remove_wine(cur)
     except ValueError:
         print('You did not enter a valid selection. Try again.\n')
         return False
@@ -48,7 +65,19 @@ def menu_option(selection: int, con, cur) -> bool:
     return True
 
 
-def add_wine(cur):
+def add_wine(cur) -> None:
+    """Adds a wine to the database
+
+    Parameters
+    ----------
+    cur : sqlite3.Cursor
+        Database connection cursor
+
+    Returns
+    -------
+    None
+    """
+
     not_correct = True
     wine = Wine()
 
@@ -94,7 +123,19 @@ def add_wine(cur):
                     VALUES ('{wine.name()}', {wine.rating()}, '{wine.review()}');''')
 
 
-def show_wines(cur):
+def show_wines(cur) -> None:
+    """Shows wines in the database depending on the user's selection
+
+    Parameters
+    ----------
+    cur : sqlite3.Cursor
+        Database connection cursor
+
+    Returns
+    -------
+    None
+    """
+
     exit_select = False
     options = (1, 2, 0)
     while exit_select is False:
@@ -113,9 +154,22 @@ def show_wines(cur):
             print()
         elif selection == 0:
             exit_select = True
+    print()
 
 
-def search_wines(cur):
+def search_wines(cur) -> None:
+    """Allows user to search and show wines
+
+    Parameters
+    ----------
+    cur : sqlite3.Cursor
+        Database connection cursor
+
+    Returns
+    -------
+    None
+    """
+
     exit_select = False
     options = (1, 2, 0)
     while exit_select is False:
@@ -147,6 +201,30 @@ def search_wines(cur):
                 print(f'There are no wines with a rating of {rating_search} in the list.\n')
         elif selection == 0:
             exit_select = True
+    print()
+
+
+def remove_wine(cur) -> None:
+    """Removes a wine from the database
+
+    Parameters
+    ----------
+    cur : sqlite3.Cursor
+        Database connection cursor
+
+    Returns
+    -------
+    None
+    """
+
+    wine_to_remove: str = input('Which wine would you like to remove: ')
+    print(f'Trying to remove {wine_to_remove} from the database...')
+    if cur.execute(f'SELECT EXISTS(SELECT 1 FROM reviews WHERE Name=\'{wine_to_remove}\' LIMIT 1);').fetchone()[0] == 0:
+        print('That wine was not in the database.')
+    else:
+        print(f'Wine found. Deleting {wine_to_remove} from the database.')
+        cur.execute(f'DELETE FROM reviews WHERE NAME=\'{wine_to_remove}\';')
+    print()
 
 
 class Wine:
